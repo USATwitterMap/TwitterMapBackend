@@ -14,6 +14,8 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
+import java.util.Properties;
+
 import org.apache.hadoop.conf.Configuration;
 
 import org.apache.hadoop.util.Tool;
@@ -27,9 +29,12 @@ import utilities.Constants;
 public class TwitterDataDriver extends Configured implements Tool, Runnable {
 
 	private String inputFiles;
+	private String hadoopOutputLoc;
 	
-	public TwitterDataDriver(String inputFiles) 
+	public TwitterDataDriver(String inputFiles, Properties prop) 
 	{
+		hadoopOutputLoc = prop.getProperty(Constants.HADOOP_OUTPUT_DATA_LOC);
+		
 		this.inputFiles = inputFiles;
 	}
 	
@@ -48,10 +53,10 @@ public class TwitterDataDriver extends Configured implements Tool, Runnable {
 
 		// this deletes possible output paths to prevent job failures
 		FileSystem fs = FileSystem.get(conf);
-		Path out = new Path(Constants.HADOOP_OUTPUT_DATA_LOC);
+		Path out = new Path(hadoopOutputLoc);
 		fs.delete(out, true);
 		
-		FileOutputFormat.setOutputPath(job, new Path(Constants.HADOOP_OUTPUT_DATA_LOC));
+		FileOutputFormat.setOutputPath(job, new Path(hadoopOutputLoc));
 
 		job.setMapperClass(TwitterDataMapper.class);
 

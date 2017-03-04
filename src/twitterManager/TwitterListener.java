@@ -1,6 +1,7 @@
 package twitterManager;
 import java.io.File;
 import java.io.IOException;
+import java.util.Properties;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -14,10 +15,17 @@ public class TwitterListener implements Runnable{
 	
 	private TwitterStream twitterStream;
 	private MyListener listener;
+	private Properties prop = null;
+	
+	public TwitterListener(Properties prop) 
+	{
+		this.prop = prop;
+	}
+	
 	public void run()
 	{	
 		try {
-			listener = new MyListener();
+			listener = new MyListener(prop);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -6,6 +6,7 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Properties;
 
 import org.apache.commons.lang3.EnumUtils;
 
@@ -17,15 +18,18 @@ import twitter4j.StatusListener;
 import utilities.Constants;
 
 public class MyListener implements StatusListener{
-	private TweetProcessor[] tweetProcessors = new TweetProcessor[Constants.NUM_OF_TWEET_PROCESSORS];
+	private int numOfProcessors;
+	private TweetProcessor[] tweetProcessors = null;
 	private int curTweetProcessor = 0;
 	private int busyProcessors = 0;
 	
-	public MyListener() throws IOException
+	public MyListener(Properties prop) throws IOException
 	{
-		for(int index = 0; index < Constants.NUM_OF_TWEET_PROCESSORS; index++) 
+		numOfProcessors = Integer.parseInt(prop.getProperty(Constants.NUM_OF_TWEET_PROCESSORS));
+		tweetProcessors = new TweetProcessor[numOfProcessors];
+		for(int index = 0; index < numOfProcessors; index++) 
 		{
-			tweetProcessors[index] = new TweetProcessor(index);
+			tweetProcessors[index] = new TweetProcessor(index, prop);
 			Thread processorThread = new Thread(tweetProcessors[index]);
 			processorThread.start();
 		}
@@ -35,7 +39,7 @@ public class MyListener implements StatusListener{
     {
     	busyProcessors = 0;
     	boolean tweetDropped = true;
-    	while(busyProcessors < Constants.NUM_OF_TWEET_PROCESSORS) 
+    	while(busyProcessors < numOfProcessors) 
     	{
     		if(!tweetProcessors[curTweetProcessor].IsFull()) 
     		{
@@ -47,14 +51,14 @@ public class MyListener implements StatusListener{
     		{
     			busyProcessors++;
     			curTweetProcessor++;
-    			if(curTweetProcessor >= Constants.NUM_OF_TWEET_PROCESSORS)
+    			if(curTweetProcessor >= numOfProcessors)
     			{
     				curTweetProcessor = 0;
     			}
     		}
     	}
     	curTweetProcessor++;
-    	if(curTweetProcessor >= Constants.NUM_OF_TWEET_PROCESSORS)
+    	if(curTweetProcessor >= numOfProcessors)
 		{
 			curTweetProcessor = 0;
 		}
@@ -78,7 +82,7 @@ public class MyListener implements StatusListener{
 	
 	public void Stop() 
 	{
-		for(int index = 0; index < Constants.NUM_OF_TWEET_PROCESSORS; index++) 
+		for(int index = 0; index < numOfProcessors; index++) 
 		{
 			tweetProcessors[index].Stop();
 		}
@@ -86,7 +90,7 @@ public class MyListener implements StatusListener{
 	
 	public void Pause() 
 	{
-		for(int index = 0; index < Constants.NUM_OF_TWEET_PROCESSORS; index++) 
+		for(int index = 0; index < numOfProcessors; index++) 
 		{
 			tweetProcessors[index].Pause();
 		}
@@ -94,7 +98,7 @@ public class MyListener implements StatusListener{
 	
 	public void Resume() 
 	{
-		for(int index = 0; index < Constants.NUM_OF_TWEET_PROCESSORS; index++) 
+		for(int index = 0; index < numOfProcessors; index++) 
 		{
 			tweetProcessors[index].Unpause();
 		}
@@ -103,7 +107,7 @@ public class MyListener implements StatusListener{
 	public String SwitchStagingArea() 
 	{
 		String newStagingArea = null;
-		for(int index = 0; index < Constants.NUM_OF_TWEET_PROCESSORS; index++) 
+		for(int index = 0; index < numOfProcessors; index++) 
 		{
 			newStagingArea = tweetProcessors[index].SwitchStagingArea();
 		}

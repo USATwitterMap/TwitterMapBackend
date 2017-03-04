@@ -13,19 +13,25 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.util.Properties;
 
 import utilities.Constants;
 
 public class DatabaseController
 {  
     private Connection conn = null;
+    private String storageInSec;
     Statement stmt = null;
 	   
-	public DatabaseController() 
+	public DatabaseController(Properties prop) 
 	{
+		String databaseUrl = prop.getProperty(Constants.DB_URL);
+		String databaseUser = prop.getProperty(Constants.USER);
+		String databasePass = prop.getProperty(Constants.PASS);
+		storageInSec = prop.getProperty(Constants.STORAGE_IN_SECONDS);
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
-			conn = DriverManager.getConnection(Constants.DB_URL, Constants.USER, Constants.PASS);
+			conn = DriverManager.getConnection(databaseUrl, databaseUser, databasePass);
 			stmt = conn.createStatement();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -47,10 +53,10 @@ public class DatabaseController
 	
 	private void DeleteOldTimes() throws SQLException 
 	{
-		String sql = "DELETE FROM Words where time IN (SELECT id FROM Times WHERE TIMESTAMPDIFF(SECOND, endTime, NOW()) > " + Constants.STORAGE_IN_SECONDS + ")";
+		String sql = "DELETE FROM Words where time IN (SELECT id FROM Times WHERE TIMESTAMPDIFF(SECOND, endTime, NOW()) > " + storageInSec + ")";
     	if(stmt.executeUpdate(sql) > 0) 
     	{
-	    	sql = "DELETE FROM Times WHERE TIMESTAMPDIFF(SECOND, endTime, NOW()) > " + Constants.STORAGE_IN_SECONDS;
+	    	sql = "DELETE FROM Times WHERE TIMESTAMPDIFF(SECOND, endTime, NOW()) > " + storageInSec;
 	    	stmt.executeUpdate(sql);	
     	}
 	}

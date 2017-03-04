@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Properties;
 
 import twitter4j.Status;
 import utilities.Constants;
@@ -16,7 +17,7 @@ public class TweetProcessor implements Runnable{
 	private int writePointer = 0;
 	private int count = 0;
 	private int currentStagingArea = 1;
-	private Status[] Tweets = new Status[Constants.NUM_OF_TWEETS_PER_PROCESSOR];
+	private Status[] Tweets = null;
 	
 	private String stagingArea1Path;
 	private String stagingArea2Path;
@@ -24,14 +25,14 @@ public class TweetProcessor implements Runnable{
 	private File stagingArea1;
 	private File stagingArea2;
 	private PrintWriter writer = null;
+	private int numOfTweets;
 	
-	private int processorNbr = 0;
-	
-	public TweetProcessor(int processorNbr) 
+	public TweetProcessor(int processorNbr, Properties prop) 
 	{
-		this.processorNbr = processorNbr;
-		stagingArea1Path = Constants.TWITTER_STAGING1_LOC + Constants.BASE_TWITTER_FILENAME;
-		stagingArea2Path = Constants.TWITTER_STAGING2_LOC + Constants.BASE_TWITTER_FILENAME;
+		numOfTweets = Integer.parseInt(prop.getProperty(Constants.NUM_OF_TWEETS_PER_PROCESSOR));
+		stagingArea1Path = prop.getProperty(Constants.TWITTER_STAGING1_LOC) + prop.getProperty(Constants.BASE_TWITTER_FILENAME);
+		stagingArea1Path = prop.getProperty(Constants.TWITTER_STAGING2_LOC) + prop.getProperty(Constants.BASE_TWITTER_FILENAME);
+		Tweets = new Status[numOfTweets];
 		stagingArea1 = new File(stagingArea1Path + processorNbr);
 		stagingArea2 = new File(stagingArea2Path + processorNbr);
 		try {
@@ -55,7 +56,7 @@ public class TweetProcessor implements Runnable{
 					tweet = Tweets[readPointer];
 					readPointer++;
 					count--;
-					if(readPointer >= Constants.NUM_OF_TWEETS_PER_PROCESSOR) 
+					if(readPointer >= numOfTweets) 
 					{
 						readPointer = 0;
 					}
@@ -130,14 +131,14 @@ public class TweetProcessor implements Runnable{
 	
 	public void Add(Status tweet) 
 	{
-		if(count < Constants.NUM_OF_TWEETS_PER_PROCESSOR && !stop) 
+		if(count < numOfTweets && !stop) 
 		{
 			synchronized(this) 
 			{
 				Tweets[writePointer] = tweet;
 				writePointer++;
 				count++;
-				if(writePointer >= Constants.NUM_OF_TWEETS_PER_PROCESSOR) 
+				if(writePointer >= numOfTweets) 
 				{
 					writePointer = 0;
 				}

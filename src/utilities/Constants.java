@@ -2,23 +2,17 @@ package utilities;
 
 public class Constants 
 {
-	//files
-	public static final String TWITTER_STAGING1_LOC = "TwitterOutput/StagingArea0/";
-	public static final String TWITTER_STAGING2_LOC = "TwitterOutput/StagingArea1/";
-	public static final String BASE_TWITTER_FILENAME = "twitterdata";
-	public static final String HADOOP_INPUT_DATA_LOC = "Hadoop/HadoopInput/HadoopInputData.txt";
-	public static final String HADOOP_OUTPUT_DATA_LOC = "Hadoop/HadoopOutput/";
-	
-	//database settings
-	public static final String DB_URL = "jdbc:mysql://localhost:3306/TwitterMap";
-	public static final String USER = "root";
-	public static final String PASS = "ren-6BrGh)@d-R[K";
-	
-	//twitter settings
-	public static final int NUM_OF_TWEET_PROCESSORS = 10;
-	public static final int NUM_OF_TWEETS_PER_PROCESSOR = 10;
-	
-	//hadoop settings
-	public static final int TIME_BETWEEN_JOBS_IN_SECONDS = 5;
-	public static final int STORAGE_IN_SECONDS = 20;
+	//property file labels
+	public static final String TWITTER_STAGING1_LOC = "TWITTER_STAGING1_LOC";
+	public static final String TWITTER_STAGING2_LOC = "TWITTER_STAGING2_LOC";
+	public static final String BASE_TWITTER_FILENAME = "BASE_TWITTER_FILENAME";
+	public static final String HADOOP_INPUT_DATA_LOC = "HADOOP_INPUT_DATA_LOC";
+	public static final String HADOOP_OUTPUT_DATA_LOC = "HADOOP_OUTPUT_DATA_LOC";
+	public static final String DB_URL = "DB_URL";
+	public static final String USER = "USER";
+	public static final String PASS = "PASS";
+	public static final String NUM_OF_TWEET_PROCESSORS = "NUM_OF_TWEET_PROCESSORS";
+	public static final String NUM_OF_TWEETS_PER_PROCESSOR = "NUM_OF_TWEETS_PER_PROCESSOR";
+	public static final String TIME_BETWEEN_JOBS_IN_SECONDS = "TIME_BETWEEN_JOBS_IN_SECONDS";
+	public static final String STORAGE_IN_SECONDS = "STORAGE_IN_SECONDS";
 }
