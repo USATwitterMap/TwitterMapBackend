@@ -1,18 +1,7 @@
 package twitterManager;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.Properties;
-
-import org.apache.commons.lang3.EnumUtils;
 import org.apache.log4j.Logger;
-
-import hadoopManager.TwitterDataDriver;
-import twitter4j.Place;
 import twitter4j.StallWarning;
 import twitter4j.Status;
 import twitter4j.StatusDeletionNotice;

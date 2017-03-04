@@ -8,6 +8,7 @@ package utilities;
 public class Constants 
 {
 	//property file labels
+	
 	public static final String TWITTER_STAGING1_LOC = "TWITTER_STAGING1_LOC";
 	public static final String TWITTER_STAGING2_LOC = "TWITTER_STAGING2_LOC";
 	public static final String BASE_TWITTER_FILENAME = "BASE_TWITTER_FILENAME";

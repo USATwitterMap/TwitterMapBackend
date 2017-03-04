@@ -101,7 +101,7 @@ public class TwitterStreamingData  {
 	}
 	
 	/**
-	 * Healper method to repeatedly check if thread has terminated
+	 * Helper method to repeatedly check if thread has terminated
 	 * TODO: consider deleting this in place of join?
 	 * @param thread
 	 * @throws InterruptedException

@@ -1,16 +1,9 @@
 package twitterManager;
-import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
-
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
-
-import twitter4j.FilterQuery;
 import twitter4j.TwitterStream;
 import twitter4j.TwitterStreamFactory;
-import utilities.Constants;
 
 /**
  * Manages listening to tweets and processing of tweets from Twitter API

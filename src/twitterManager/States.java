@@ -1,7 +1,7 @@
 package twitterManager;
 
 /**
- * Used to determine if a tweet comes from a perticular state
+ * Used to determine if a tweet comes from a particular state
  * @author brett
  *
  */

@@ -5,9 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Properties;
-
 import org.apache.log4j.Logger;
-
 import twitter4j.Status;
 import utilities.Constants;
 
