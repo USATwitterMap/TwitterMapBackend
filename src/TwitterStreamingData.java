@@ -1,10 +1,9 @@
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-import org.apache.commons.io.FileUtils;
+import org.apache.log4j.Logger;
 
 import databaseManager.DatabaseController;
 import hadoopManager.TwitterDataDriver;
@@ -14,43 +13,46 @@ import utilities.Constants;
 
 public class TwitterStreamingData  {
 	
-	private static File hadoopOutputDataFile = null;
+	private final static Logger logger = Logger.getLogger(TwitterStreamingData.class);
 	private static Properties prop = null;
 	
 	public static void main(String[] args) throws TwitterException, IOException, InterruptedException
 	{	
 		loadPropertiesFile();
-		int timeBetweeJobs = Integer.parseInt(prop.getProperty(Constants.TIME_BETWEEN_JOBS_IN_SECONDS));
+		int timeBetweenJobs = Integer.parseInt(prop.getProperty(Constants.TIME_BETWEEN_JOBS_IN_SECONDS));
 		String hadoopOutput = prop.getProperty(Constants.HADOOP_OUTPUT_DATA_LOC);
-		
+		logger.info("Time between jobs: " + timeBetweenJobs);
+		logger.info("Hadoop output directory: " + hadoopOutput);
 		
 		DatabaseController dbController = new DatabaseController(prop);
 		TwitterListener listener = new TwitterListener(prop);
+		TwitterDataDriver hadoopDriver = new TwitterDataDriver(prop);
 		Thread hadoopJob = null;
 		Thread twitterData = new Thread(listener);
 		twitterData.start();
-		int count = 0;
-        while(count >-1) 
+        while(true) 
         {
-        	count++;
-			Thread.sleep(timeBetweeJobs * 1000);
-			
+        	logger.info("Waiting " + timeBetweenJobs + " seconds for twitter data");
+			Thread.sleep(timeBetweenJobs * 1000);
 			if(hadoopJob == null || !hadoopJob.isAlive()) 
 			{
+				logger.info("Pausing twitter data collection");
 				listener.Pause();
-				hadoopJob = new Thread(new TwitterDataDriver(listener.SwitchCurrentStagingArea(), prop));
+				hadoopDriver.SetNewInputLocation(listener.SwitchCurrentStagingArea());
+				hadoopJob = new Thread(hadoopDriver);
+				logger.info("Resuming twitter data collection");
 				listener.Resume();
-				System.out.println("Running Hadoop Job");
+				logger.info("Running Hadoop job");
 		        hadoopJob.start();
 		        waitForThreadToDie(hadoopJob);
-		        System.out.println("Hadoop Job complete");
-		        hadoopOutputDataFile = new File(hadoopOutput + "part-r-00000");
-		        dbController.InsertTwitterData(hadoopOutputDataFile);
-		        System.out.println("Hadoop data written");
+		        logger.info("Hadoop job complete");
+		        logger.info("Inserting twitter data");
+		        dbController.InsertTwitterData(hadoopOutput + "part-r-00000");
+		        logger.info("Database insertion complete");
 			}
         }
-        listener.StopListening();
-		waitForThreadToDie(twitterData);
+        //listener.StopListening();
+		//waitForThreadToDie(twitterData);
 	}
 	
 	private static void loadPropertiesFile() throws IOException 

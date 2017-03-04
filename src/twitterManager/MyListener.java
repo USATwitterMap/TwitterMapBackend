@@ -9,7 +9,9 @@ import java.nio.file.Files;
 import java.util.Properties;
 
 import org.apache.commons.lang3.EnumUtils;
+import org.apache.log4j.Logger;
 
+import hadoopManager.TwitterDataDriver;
 import twitter4j.Place;
 import twitter4j.StallWarning;
 import twitter4j.Status;
@@ -18,6 +20,7 @@ import twitter4j.StatusListener;
 import utilities.Constants;
 
 public class MyListener implements StatusListener{
+	private final static Logger logger = Logger.getLogger(MyListener.class);
 	private int numOfProcessors;
 	private TweetProcessor[] tweetProcessors = null;
 	private int curTweetProcessor = 0;
@@ -27,6 +30,7 @@ public class MyListener implements StatusListener{
 	{
 		numOfProcessors = Integer.parseInt(prop.getProperty(Constants.NUM_OF_TWEET_PROCESSORS));
 		tweetProcessors = new TweetProcessor[numOfProcessors];
+		logger.info("Creating " + numOfProcessors + " processing threads for twitter data");
 		for(int index = 0; index < numOfProcessors; index++) 
 		{
 			tweetProcessors[index] = new TweetProcessor(index, prop);
@@ -63,7 +67,7 @@ public class MyListener implements StatusListener{
 			curTweetProcessor = 0;
 		}
     	if(tweetDropped) {
-    		System.out.println("Tweet dropped");
+    		logger.info("No resources to handle tweet, tweet discarded");
     	}
     }
     public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) {}
@@ -82,6 +86,7 @@ public class MyListener implements StatusListener{
 	
 	public void Stop() 
 	{
+		logger.info("Stopping all tweet processors");
 		for(int index = 0; index < numOfProcessors; index++) 
 		{
 			tweetProcessors[index].Stop();
@@ -90,6 +95,7 @@ public class MyListener implements StatusListener{
 	
 	public void Pause() 
 	{
+		logger.info("Pausing all tweet processors");
 		for(int index = 0; index < numOfProcessors; index++) 
 		{
 			tweetProcessors[index].Pause();
@@ -98,6 +104,7 @@ public class MyListener implements StatusListener{
 	
 	public void Resume() 
 	{
+		logger.info("Resuming all tweet processors");
 		for(int index = 0; index < numOfProcessors; index++) 
 		{
 			tweetProcessors[index].Unpause();
@@ -106,11 +113,13 @@ public class MyListener implements StatusListener{
 	
 	public String SwitchStagingArea() 
 	{
-		String newStagingArea = null;
+		String oldStagingArea = null;
+		logger.info("Redirecting twitter output to new staging area");
 		for(int index = 0; index < numOfProcessors; index++) 
 		{
-			newStagingArea = tweetProcessors[index].SwitchStagingArea();
+			oldStagingArea = tweetProcessors[index].SwitchStagingArea();
 		}
-		return newStagingArea;
+		logger.info("Twitter output successfully redirected from: " + oldStagingArea + " to new location");
+		return oldStagingArea;
 	}
 }

@@ -8,6 +8,7 @@ public class Constants
 	public static final String BASE_TWITTER_FILENAME = "BASE_TWITTER_FILENAME";
 	public static final String HADOOP_INPUT_DATA_LOC = "HADOOP_INPUT_DATA_LOC";
 	public static final String HADOOP_OUTPUT_DATA_LOC = "HADOOP_OUTPUT_DATA_LOC";
+	public static final String HADOOP_JOB_NAME = "HADOOP_JOB_NAME";
 	public static final String DB_URL = "DB_URL";
 	public static final String USER = "USER";
 	public static final String PASS = "PASS";

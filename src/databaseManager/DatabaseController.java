@@ -15,12 +15,15 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.Properties;
 
+import org.apache.log4j.Logger;
+
 import utilities.Constants;
 
 public class DatabaseController
 {  
     private Connection conn = null;
     private String storageInSec;
+    private final static Logger logger = Logger.getLogger(DatabaseController.class);
     Statement stmt = null;
 	   
 	public DatabaseController(Properties prop) 
@@ -29,40 +32,50 @@ public class DatabaseController
 		String databaseUser = prop.getProperty(Constants.USER);
 		String databasePass = prop.getProperty(Constants.PASS);
 		storageInSec = prop.getProperty(Constants.STORAGE_IN_SECONDS);
+		logger.info("Database URL: " + databaseUrl);
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
 			conn = DriverManager.getConnection(databaseUrl, databaseUser, databasePass);
 			stmt = conn.createStatement();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+			logger.error("Database connection failed");
 			e.printStackTrace();
 		}
+		logger.info("Database connection successful");
 	}
 	
-	public void InsertTwitterData(File ParsedTwitterData) 
+	public void InsertTwitterData(String ParsedTwitterData) 
 	{
+		logger.info("Inserting parsed twitter data into database");
 		try {
 			String newTime = CreateNewTime();
-			LoadHadoopFiles(newTime, ParsedTwitterData.getAbsolutePath());
+			logger.info("Time entry with id : " + newTime + " created");
+			LoadHadoopFiles(newTime, ParsedTwitterData);
 			DeleteOldTimes();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+			logger.error("Inserting parsed twitter data into database failed");
 			e.printStackTrace();
 		}
 	}
 	
 	private void DeleteOldTimes() throws SQLException 
 	{
+		logger.info("Checking if database contains twitter data older than: " + storageInSec + " seconds");
 		String sql = "DELETE FROM Words where time IN (SELECT id FROM Times WHERE TIMESTAMPDIFF(SECOND, endTime, NOW()) > " + storageInSec + ")";
     	if(stmt.executeUpdate(sql) > 0) 
     	{
+    		logger.info("Deleting expired twitter data");
 	    	sql = "DELETE FROM Times WHERE TIMESTAMPDIFF(SECOND, endTime, NOW()) > " + storageInSec;
 	    	stmt.executeUpdate(sql);	
+    	}
+    	else {
+    		logger.info("No expired twitter data found");
     	}
 	}
 	
 	private void LoadHadoopFiles(String newTime, String path) throws SQLException
 	{
+		logger.info("Loading Hadoop output data from : " + path);
 	    String sql = "LOAD DATA LOCAL INFILE "
 	    		+ "'" + path + "' "
 	    		+ "INTO TABLE Words FIELDS TERMINATED BY ',' "
@@ -70,6 +83,7 @@ public class DatabaseController
 	    		
 	    sql = sql.replace("@TIME", newTime);
 	    stmt.executeQuery(sql);
+	    logger.info("Hadoop data insertion complete");
 	}
 	
 	private String GetLastTime() throws SQLException 

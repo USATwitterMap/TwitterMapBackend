@@ -5,6 +5,7 @@ import java.util.Properties;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.log4j.Logger;
 
 import twitter4j.FilterQuery;
 import twitter4j.TwitterStream;
@@ -16,6 +17,7 @@ public class TwitterListener implements Runnable{
 	private TwitterStream twitterStream;
 	private MyListener listener;
 	private Properties prop = null;
+	private final static Logger logger = Logger.getLogger(TwitterListener.class);
 	
 	public TwitterListener(Properties prop) 
 	{
@@ -33,25 +35,29 @@ public class TwitterListener implements Runnable{
 	    twitterStream = new TwitterStreamFactory().getInstance();
 	    
 	    twitterStream.addListener(listener);
-	    // sample() method internally creates a thread which manipulates TwitterStream and calls these adequate listener methods continuously.
+	    
 	    twitterStream.sample();
 	}
 	
 	public String SwitchCurrentStagingArea() 
 	{
+		logger.info("Redirecting twitter data output to different staging area");
 		return listener.SwitchStagingArea();
 	}
 	
 	public void StopListening() 
 	{
+		logger.info("Shutting down twitter listeners");
 		twitterStream.shutdown();
 	}
 	public void Pause() 
 	{
+		logger.info("Pausing twitter listeners");
 		listener.Pause();
 	}
 	public void Resume() 
 	{
+		logger.info("Resuming twitter listeners");
 		listener.Resume();
 	}
 }

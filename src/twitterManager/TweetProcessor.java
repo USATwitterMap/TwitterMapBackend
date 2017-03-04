@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Properties;
 
+import org.apache.log4j.Logger;
+
 import twitter4j.Status;
 import utilities.Constants;
 
@@ -26,15 +28,21 @@ public class TweetProcessor implements Runnable{
 	private File stagingArea2;
 	private PrintWriter writer = null;
 	private int numOfTweets;
+	private int processorNbr;
+	private final static Logger logger = Logger.getLogger(TweetProcessor.class);
 	
 	public TweetProcessor(int processorNbr, Properties prop) 
 	{
+		this.processorNbr = processorNbr;
 		numOfTweets = Integer.parseInt(prop.getProperty(Constants.NUM_OF_TWEETS_PER_PROCESSOR));
 		stagingArea1Path = prop.getProperty(Constants.TWITTER_STAGING1_LOC) + prop.getProperty(Constants.BASE_TWITTER_FILENAME);
-		stagingArea1Path = prop.getProperty(Constants.TWITTER_STAGING2_LOC) + prop.getProperty(Constants.BASE_TWITTER_FILENAME);
+		stagingArea2Path = prop.getProperty(Constants.TWITTER_STAGING2_LOC) + prop.getProperty(Constants.BASE_TWITTER_FILENAME);
 		Tweets = new Status[numOfTweets];
 		stagingArea1 = new File(stagingArea1Path + processorNbr);
 		stagingArea2 = new File(stagingArea2Path + processorNbr);
+		logger.info("Processor " + processorNbr + " staging area one output path: " + stagingArea1Path);
+		logger.info("Processor " + processorNbr + " staging area two output path: " + stagingArea2Path);
+		logger.info("Processor " + processorNbr + " max number of tweets before full: " + numOfTweets);
 		try {
 			writer = new PrintWriter(stagingArea1);
 		} catch (FileNotFoundException e) {
@@ -87,8 +95,7 @@ public class TweetProcessor implements Runnable{
 					try {
 						Thread.sleep(10);
 					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						logger.info("Processor " + processorNbr + " interrupted while paused");
 					}
 					if(stop) {
 						break;
@@ -98,8 +105,7 @@ public class TweetProcessor implements Runnable{
 			try {
 				Thread.sleep(10);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				logger.info("Processor " + processorNbr + " interrupted while parsing twitter data");
 			}
 		}
 		count = 0;
@@ -153,10 +159,10 @@ public class TweetProcessor implements Runnable{
 			try {
 				Thread.sleep(10);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
+		
 	}
 	
 	public void Pause() 
@@ -166,7 +172,6 @@ public class TweetProcessor implements Runnable{
 			try {
 				Thread.sleep(10);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -189,7 +194,7 @@ public class TweetProcessor implements Runnable{
 				try {
 					stagingArea2.createNewFile();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
+					logger.error("Processor " + processorNbr + " unable to change staging area to: " + stagingArea2);
 					e.printStackTrace();
 				}
 			}
@@ -197,9 +202,10 @@ public class TweetProcessor implements Runnable{
 			try {
 				writer = new PrintWriter(stagingArea2);
 			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
+				logger.error("Processor " + processorNbr + " unable to change staging area to: " + stagingArea2);
 				e.printStackTrace();
 			}
+			logger.info("Processor " + processorNbr + " successfully changed staging area to: " + stagingArea2);
 			currentStagingArea= 2;
 		}
 		else 
@@ -211,7 +217,7 @@ public class TweetProcessor implements Runnable{
 				try {
 					stagingArea1.createNewFile();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
+					logger.error("Processor " + processorNbr + " unable to change staging area to: " + stagingArea1);
 					e.printStackTrace();
 				}
 			}
@@ -219,9 +225,10 @@ public class TweetProcessor implements Runnable{
 			try {
 				writer = new PrintWriter(stagingArea1);
 			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
+				logger.error("Processor " + processorNbr + " unable to change staging area to: " + stagingArea1);
 				e.printStackTrace();
 			}
+			logger.info("Processor " + processorNbr + " successfully changed staging area to: " + stagingArea1);
 			currentStagingArea = 1;
 		}
 		
