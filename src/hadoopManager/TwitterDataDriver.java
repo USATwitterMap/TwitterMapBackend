@@ -26,6 +26,11 @@ import org.apache.log4j.Logger;
 import databaseManager.DatabaseController;
 import utilities.Constants;
 
+/**
+ * Twitter data driver for Hadoop job execution
+ * @author brett
+ *
+ */
 public class TwitterDataDriver extends Configured implements Tool, Runnable {
 
 	private String hadoopOutputLoc;
@@ -33,6 +38,10 @@ public class TwitterDataDriver extends Configured implements Tool, Runnable {
 	private String inputFiles;
 	private final static Logger logger = Logger.getLogger(TwitterDataDriver.class);
 	
+	/**
+	 * Constructor takes property files that control job output path and job name
+	 * @param prop
+	 */
 	public TwitterDataDriver(Properties prop) 
 	{
 		hadoopOutputLoc = prop.getProperty(Constants.HADOOP_OUTPUT_DATA_LOC);
@@ -41,6 +50,9 @@ public class TwitterDataDriver extends Configured implements Tool, Runnable {
 		logger.info("Hadoop output location: " + hadoopOutputLoc);
 	}
 	
+	/**
+	 * hadoop run method for executing the job
+	 */
 	public int run(String[] args) throws Exception
 	{
 		// create a configuration
@@ -53,6 +65,7 @@ public class TwitterDataDriver extends Configured implements Tool, Runnable {
 		
 		job.setJobName(hadoopJobName);
 
+		//import all files under inputFiles directory using regex
 		FileInputFormat.addInputPath(job, new Path(inputFiles + "*"));
 
 		// this deletes possible output paths to prevent job failures
@@ -74,6 +87,10 @@ public class TwitterDataDriver extends Configured implements Tool, Runnable {
 		return job.waitForCompletion(true) ? 0 : 1;
 
 	}
+	
+	/**
+	 * Run method for thread execution (calls ToolRunner)
+	 */
 	public void run()
 	{
 		String[] args = new String[] { };
@@ -87,6 +104,10 @@ public class TwitterDataDriver extends Configured implements Tool, Runnable {
 		}
 	}
 	
+	/**
+	 * Change the input files directory for which this job is ran against
+	 * @param inputFiles Hadoop input directory
+	 */
 	public void SetNewInputLocation(String inputFiles) 
 	{
 		this.inputFiles = inputFiles;

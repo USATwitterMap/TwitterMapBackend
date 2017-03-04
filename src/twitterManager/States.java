@@ -1,5 +1,10 @@
 package twitterManager;
 
+/**
+ * Used to determine if a tweet comes from a perticular state
+ * @author brett
+ *
+ */
 public enum States {
 	Alabama("Alabama", "AL"),
 	Alaska("Alaska", "AK"),
@@ -55,16 +60,30 @@ public enum States {
 	private String state ;
 	private String stateAbbr ;
 	
+	/**
+	 * Constructor of above states
+	 * @param state
+	 * @param stateAbbr
+	 */
 	States(String state, String stateAbbr) {
         this.state = state;
         this.stateAbbr = stateAbbr;
     }
 
+	/**
+	 * Check if the input looks like it has a state in it
+	 * @param input
+	 * @return The state identified, null otherwise
+	 */
     public static String IsState(String input) 
     {
     	String result = null;
+    	
+    	//cycle through all the states
     	for(States aState : States.values()) 
     	{
+    		//check if state contains either the full state name or abbreviation 
+    		//Potentially a lot of false positives here...
     		if(input.contains(aState.state) || input.contains(aState.stateAbbr)) {
     			result = aState.stateAbbr;
     			break;

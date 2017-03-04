@@ -11,6 +11,11 @@ import org.apache.log4j.Logger;
 import twitter4j.Status;
 import utilities.Constants;
 
+/**
+ * Processes tweet data and writes results to file
+ * @author brett
+ *
+ */
 public class TweetProcessor implements Runnable{
 	
 	private boolean stop = false;
@@ -29,12 +34,23 @@ public class TweetProcessor implements Runnable{
 	private PrintWriter writer = null;
 	private int numOfTweets;
 	private int processorNbr;
+	private String tweetData = "";
 	private final static Logger logger = Logger.getLogger(TweetProcessor.class);
 	
+	/**
+	 * Creates new processor with unique Id and property file for settings
+	 * @param processorNbr
+	 * @param prop
+	 */
 	public TweetProcessor(int processorNbr, Properties prop) 
 	{
 		this.processorNbr = processorNbr;
+		
+		//control the max number of tweets in queue to be processed
 		numOfTweets = Integer.parseInt(prop.getProperty(Constants.NUM_OF_TWEETS_PER_PROCESSOR));
+		
+		//set up two staging areas for twitter data to be written to.
+		//the other staging area will be where Hadoop gets input from
 		stagingArea1Path = prop.getProperty(Constants.TWITTER_STAGING1_LOC) + prop.getProperty(Constants.BASE_TWITTER_FILENAME);
 		stagingArea2Path = prop.getProperty(Constants.TWITTER_STAGING2_LOC) + prop.getProperty(Constants.BASE_TWITTER_FILENAME);
 		Tweets = new Status[numOfTweets];
@@ -43,6 +59,8 @@ public class TweetProcessor implements Runnable{
 		logger.info("Processor " + processorNbr + " staging area one output path: " + stagingArea1Path);
 		logger.info("Processor " + processorNbr + " staging area two output path: " + stagingArea2Path);
 		logger.info("Processor " + processorNbr + " max number of tweets before full: " + numOfTweets);
+		
+		//Attempt to attach a print writer to the active staging area
 		try {
 			writer = new PrintWriter(stagingArea1);
 		} catch (FileNotFoundException e) {
@@ -51,14 +69,21 @@ public class TweetProcessor implements Runnable{
 		}
 	}
 	
-	private String tweetData = "";
+	/**
+	 * Begin processing tweets
+	 */
 	public void run() 
 	{
 		Status tweet = null;
+		
+		//continue thread until told to stop
 		while(!stop) 
 		{
+			//if there are pending tweets to process
 			if(count > 0) 
 			{
+				//lock down critical section so tweets cant be added or removed while we are attempting to get a 
+				//tweet to process
 				synchronized(this) 
 				{
 					tweet = Tweets[readPointer];
@@ -69,6 +94,8 @@ public class TweetProcessor implements Runnable{
 						readPointer = 0;
 					}
 				}
+				
+				//Check if tweet place or user profile place has a US state in it
 				String thePlace = null;
 		    	if(tweet.getPlace() != null) 
 		    	{
@@ -80,6 +107,8 @@ public class TweetProcessor implements Runnable{
 		    	}
 		    	if(thePlace != null) 
 		    	{
+		    		//write the state and the tweet contents into the file
+		    		//strip out all non readable characters from tweet
 		    		tweetData = stripControlChars(tweet.getText());
 		    		if(tweetData.length() > 0) 
 		    		{
@@ -88,8 +117,10 @@ public class TweetProcessor implements Runnable{
 		    		}
 		    	}
 			}
+			//if no tweets are pending for processing
 			else 
 			{
+				//if we are paused, wait here until unpaused
 				while(pause) 
 				{
 					try {
@@ -102,6 +133,7 @@ public class TweetProcessor implements Runnable{
 					}
 				}
 			}
+			//wait for 10 milliseconds to prevent busy wait
 			try {
 				Thread.sleep(10);
 			} catch (InterruptedException e) {
@@ -111,9 +143,13 @@ public class TweetProcessor implements Runnable{
 		count = 0;
 	}
 	
+	/**
+	 * Check if this tweet processor has room to accept more tweets
+	 * @return true if processor cannot take any more tweets, false otherwise
+	 */
 	public boolean IsFull() 
 	{
-		if(count == 10) 
+		if(count == numOfTweets) 
 		{
 			return true;
 		}
@@ -123,6 +159,10 @@ public class TweetProcessor implements Runnable{
 		}
 	}
 	
+	/**
+	 * Check if there are pending tweets in queue
+	 * @return true if pending tweets, false otherwise
+	 */
 	public boolean IsBusy() 
 	{
 		if(count > 0) 
@@ -135,6 +175,10 @@ public class TweetProcessor implements Runnable{
 		}
 	}
 	
+	/**
+	 * Add a tweet to the pending list of tweets to be processed
+	 * @param tweet The tweet data
+	 */
 	public void Add(Status tweet) 
 	{
 		if(count < numOfTweets && !stop) 
@@ -152,6 +196,9 @@ public class TweetProcessor implements Runnable{
 		}
 	}
 	
+	/**
+	 * Stop all tweet processing
+	 */
 	public void Stop() 
 	{
 		stop = true;
@@ -165,6 +212,9 @@ public class TweetProcessor implements Runnable{
 		
 	}
 	
+	/**
+	 * Pause tweet processing until Unpause
+	 */
 	public void Pause() 
 	{
 		pause = true;
@@ -177,17 +227,27 @@ public class TweetProcessor implements Runnable{
 		}
 	}
 	
+	/**
+	 * Unpause tweet processing until Paused
+	 */
 	public void Unpause() 
 	{
 		pause = false;
 	}
 	
+	/***
+	 * Switch the area where this tweet processor writes tweet data to
+	 * @return The area where the tweet processor was writing tweet data to before the change
+	 */
 	public String SwitchStagingArea() 
 	{
 		String oldStagingArea = "";
+		//if currently on staging area 1
 		if(currentStagingArea == 1) 
 		{
 			oldStagingArea = stagingArea1Path;
+			
+			//switch to staging area 2 and delete all old data there
 			if(stagingArea2.exists()) 
 			{
 				stagingArea2.delete();
@@ -208,9 +268,12 @@ public class TweetProcessor implements Runnable{
 			logger.info("Processor " + processorNbr + " successfully changed staging area to: " + stagingArea2);
 			currentStagingArea= 2;
 		}
+		//if currently on staging area 2
 		else 
 		{
 			oldStagingArea = stagingArea2Path;
+			
+			//switch to staging area 1 and delete all old data there
 			if(stagingArea1.exists()) 
 			{
 				stagingArea1.delete();
@@ -236,24 +299,35 @@ public class TweetProcessor implements Runnable{
 		return oldStagingArea;
 	}
 	
-	char [] oldChars = new char[5];
+	
+	private char [] oldChars = new char[5];
 
+	/**
+	 * Removes all characters from string that are less than the ascii value for whitespace
+	 * @param s the raw string
+	 * @return String with readable characters in it
+	 */
 	private String stripControlChars(String s)
 	{
 	    final int inputLen = s.length();
+	    //adjust input length of array to match string size
 	    if ( oldChars.length < inputLen )
 	    {
 	        oldChars = new char[inputLen];
 	    }
+	    //copy characters of string into array
 	    s.getChars(0, inputLen, oldChars, 0);
 	    int newLen = 0;
 	    for (int j = 0; j < inputLen; j++) {
 	        char ch = oldChars[j];
+	        
+	        //filter out all characters that are less than the ascii value for whiespace
 	        if (ch >= ' ') {
 	            oldChars[newLen] = ch;
 	            newLen++;
 	        }
 	    }
+	    //return newly constructed string
 	    return new String(oldChars, 0, newLen);
 	}
 }

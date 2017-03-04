@@ -1,5 +1,10 @@
 package utilities;
 
+/**
+ * Contains property label names for accessing property values
+ * @author brett
+ *
+ */
 public class Constants 
 {
 	//property file labels
