@@ -34,8 +34,10 @@ public class TwitterStreamingData  {
 				System.out.println("Running Hadoop Job");
 		        hadoopJob.start();
 		        waitForThreadToDie(hadoopJob);
+		        System.out.println("Hadoop Job complete");
 		        hadoopOutputDataFile = new File(Constants.HADOOP_OUTPUT_DATA_LOC+"part-r-00000");
 		        dbController.InsertTwitterData(hadoopOutputDataFile);
+		        System.out.println("Hadoop data written");
 			}
         }
         listener.StopListening();

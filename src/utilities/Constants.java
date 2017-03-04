@@ -19,6 +19,6 @@ public class Constants
 	public static final int NUM_OF_TWEETS_PER_PROCESSOR = 10;
 	
 	//hadoop settings
-	public static final int TIME_BETWEEN_JOBS_IN_SECONDS = 15*60;
-	public static final int STORAGE_IN_SECONDS = 24*60*60;
+	public static final int TIME_BETWEEN_JOBS_IN_SECONDS = 5;
+	public static final int STORAGE_IN_SECONDS = 20;
 }

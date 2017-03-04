@@ -25,7 +25,8 @@ extends Reducer<Text, IntWritable, Text, IntWritable> {
 		}
 		if(sum > 2) 
 		{
-			context.write(key, new IntWritable(sum));
+			Text realKey = new Text(key.toString().substring(0, 2) + "," + key.toString().substring(2));
+			context.write(realKey, new IntWritable(sum));
 		}
 	}
 

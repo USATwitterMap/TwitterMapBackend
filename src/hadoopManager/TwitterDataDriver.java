@@ -37,8 +37,8 @@ public class TwitterDataDriver extends Configured implements Tool, Runnable {
 	{
 		// create a configuration
 		Configuration conf = new Configuration();
-		
-		Job job = new Job();
+		conf.set("mapreduce.output.textoutputformat.separator", ",");
+		Job job = new Job(conf);
 
 		job.setJarByClass(TwitterDataDriver.class);
 
@@ -75,6 +75,5 @@ public class TwitterDataDriver extends Configured implements Tool, Runnable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		System.out.println("Hadoop job complete");
 	}
 }
