@@ -75,12 +75,10 @@ public class TwitterStreamingData  {
 		        logger.info("Inserting twitter data");
 		        
 		        //insert hadoop job output into database
-		        dbController.InsertTwitterData(hadoopOutput + "part-r-00000");
+		        dbController.InsertTwitterData("/home/brett/git/TwitterMapBackend/" + hadoopOutput + "part-r-00000");
 		        logger.info("Database insertion complete");
 			}
         }
-        //listener.StopListening();
-		//waitForThreadToDie(twitterData);
 	}
 	
 	/**

@@ -37,23 +37,12 @@ public class TwitterDataMapper extends Mapper<LongWritable, Text, Text, IntWrita
 		
 		//state is first entry in each line, grab first
 		line = line.trim();
-		int indexOfWord = line.indexOf(" ");
-		String state = line.substring(0, indexOfWord);
+		String[] tokens = line.split("\\ ");
+		String state = tokens[0];
 		
-		//get first space for loop below
-		line = line.substring(indexOfWord);
-		indexOfWord = line.indexOf(" ");
-
-		//keep getting words and adding them until no more spaces are present in the line
-		while(indexOfWord != -1) 
+		for(int index = 1; index < tokens.length; index++)
 		{
-			word = line.substring(0, indexOfWord).trim();
-			if(word.length() > 0) 
-			{
-				context.write(new Text(state + word), new IntWritable(1));
-			}
-			line = line.substring(indexOfWord + 1);
-			indexOfWord = line.indexOf(" ");
+			context.write(new Text(state + tokens[index]), new IntWritable(1));
 		}
 	}
 

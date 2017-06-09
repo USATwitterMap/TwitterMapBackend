@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.util.Calendar;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
@@ -22,8 +23,10 @@ public class DatabaseController
 {  
     private Connection conn = null;
     private String storageInSec;
+    private String timeBetweenJobs;
     private final static Logger logger = Logger.getLogger(DatabaseController.class);
     private Statement stmt = null;
+    private Timestamp lastInsert = null;
 	
     /**
      * Creates connection to Database using property settings
@@ -35,6 +38,7 @@ public class DatabaseController
 		String databaseUser = prop.getProperty(Constants.USER);
 		String databasePass = prop.getProperty(Constants.PASS);
 		storageInSec = prop.getProperty(Constants.STORAGE_IN_SECONDS);
+		timeBetweenJobs = prop.getProperty(Constants.TIME_BETWEEN_JOBS_IN_SECONDS);
 		logger.info("Database URL: " + databaseUrl);
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
@@ -76,15 +80,16 @@ public class DatabaseController
 	 */
 	private void DeleteOldTimes() throws SQLException 
 	{
+		String cutoffTime = new java.sql.Timestamp(new java.util.Date().getTime()).toString();
 		logger.info("Checking if database contains twitter data older than: " + storageInSec + " seconds");
-		String sql = "DELETE FROM Words where time IN (SELECT id FROM Times WHERE TIMESTAMPDIFF(SECOND, endTime, NOW()) > " + storageInSec + ")";
+		String sql = "DELETE FROM Words where time IN (SELECT id FROM Times WHERE TIMESTAMPDIFF(SECOND, endTime, '"+cutoffTime+"') > " + storageInSec + ")";
     	
 		//Need to delete tuples from Words first due to foreign key constraints
 		if(stmt.executeUpdate(sql) > 0) 
     	{
 			//TODO: what if timeslice has no words? Time entry is never deleted... 
     		logger.info("Deleting expired twitter data");
-	    	sql = "DELETE FROM Times WHERE TIMESTAMPDIFF(SECOND, endTime, NOW()) > " + storageInSec;
+	    	sql = "DELETE FROM Times WHERE TIMESTAMPDIFF(SECOND, endTime, '"+cutoffTime+"') > " + storageInSec;
 	    	stmt.executeUpdate(sql);	
     	}
     	else {
@@ -110,6 +115,7 @@ public class DatabaseController
 	    		
 	    //Add newly created timestamp to Word tuple because its not present in hadoop output
 	    sql = sql.replace("@TIME", newTime);
+	    logger.info("InsertQuery: " + sql);
 	    stmt.executeQuery(sql);
 	    logger.info("Hadoop data insertion complete");
 	}
@@ -139,13 +145,23 @@ public class DatabaseController
 	 */
 	private String CreateNewTime() throws SQLException 
 	{
-		//first locate the endTime of the most resent Times tuple
-		String sql = "SELECT endTime FROM Times where endTime = (SELECT MAX(endTime) FROM Times)";
+		Calendar c = Calendar.getInstance();
+		Timestamp currentTime = new java.sql.Timestamp(new java.util.Date().getTime());
 		Timestamp date = null;
-		ResultSet rs = stmt.executeQuery(sql);
-	    while (rs.next()) {
-	    	date = rs.getTimestamp("endTime");
-	    }
+		String sql = "";
+		
+		//first locate the endTime of the most resent Times tuple
+		if(lastInsert != null) 
+		{
+			date = lastInsert;
+		}
+		else 
+		{
+			c.add(Calendar.SECOND, -Integer.parseInt(timeBetweenJobs));
+			date = new java.sql.Timestamp(c.getTime().getTime());
+		}
+		lastInsert = currentTime;
+		
 		stmt = conn.createStatement();
 
 		//Create a Times tuple where the start time is equal to the end time of the last Times tuple
@@ -153,7 +169,7 @@ public class DatabaseController
 		PreparedStatement pstmt = conn.prepareStatement(sql);
 		pstmt.setNull(1, java.sql.Types.INTEGER);
 		pstmt.setTimestamp(2, date);
-		pstmt.setTimestamp(3, new java.sql.Timestamp(new java.util.Date().getTime()));
+		pstmt.setTimestamp(3, currentTime);
 		pstmt.executeUpdate();
 		pstmt.close();
 		
