@@ -1,19 +1,20 @@
 package hadoopManager;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CodingErrorAction;
 
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.CharArraySet;
-import org.apache.lucene.analysis.StopFilter;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.util.Version;
 
 
 /**
@@ -55,7 +56,19 @@ public class TwitterDataMapper extends Mapper<LongWritable, Text, Text, IntWrita
 	    
 	    //add each token to Hadoop
 	    while (tokenStream.incrementToken()) {
-	    	context.write(new Text(state + charTermAttribute.toString()), new IntWritable(1));
+	    	
+	    	String rawData = charTermAttribute.toString();
+	    	CharsetDecoder utf8Decoder = Charset.forName("UTF-8").newDecoder();
+	    	utf8Decoder.onMalformedInput(CodingErrorAction.REPLACE);
+	    	utf8Decoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
+	    	utf8Decoder.replaceWith("?");
+	    	
+	    	CharsetEncoder encoder = Charset.forName("UTF-8").newEncoder();
+	    	encoder.encode(CharBuffer.wrap(rawData));
+	    	
+	    	// removing non UTF-8 symbols (for SQL insertion later)
+	    	CharBuffer cleanData = utf8Decoder.decode(encoder.encode(CharBuffer.wrap(rawData)));	    	
+	    	context.write(new Text(state + cleanData.toString()), new IntWritable(1));
 	    }
 	    
 	    tokenStream.close();
