@@ -1,3 +1,5 @@
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -75,7 +77,7 @@ public class TwitterStreamingData  {
 		        logger.info("Inserting twitter data");
 		        
 		        //insert hadoop job output into database
-		        dbController.InsertTwitterData("/home/brett/git/TwitterMapBackend/" + hadoopOutput + "part-r-00000");
+		        dbController.InsertTwitterData(Constants.ExecutingLocation + hadoopOutput + "part-r-00000");
 		        logger.info("Database insertion complete");
 			}
         }
@@ -89,6 +91,19 @@ public class TwitterStreamingData  {
 	{
 		prop = new Properties();
 		String propFileName = "config.properties";
+		
+		try {
+	        File jarPath=new File(TwitterStreamingData.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+	        String propertiesPath=jarPath.getParentFile().getAbsolutePath();
+	        logger.info(" propertiesPath: "+propertiesPath + "/" + propFileName);
+	        prop.load(new FileInputStream(propertiesPath + "/" + propFileName));
+	        Constants.ExecutingLocation = propertiesPath + "/";
+	    } catch (IOException e1) {
+	    	throw new FileNotFoundException("property file '" + propFileName + "' not found in the classpath");
+	    }
+		
+		
+		/*
 		InputStream inputStream = TwitterStreamingData.class.getClassLoader().getResourceAsStream(propFileName);
 		 
 		if (inputStream != null) {
@@ -96,6 +111,7 @@ public class TwitterStreamingData  {
 		} else {
 			throw new FileNotFoundException("property file '" + propFileName + "' not found in the classpath");
 		}
+		*/
 	}
 	
 	/**

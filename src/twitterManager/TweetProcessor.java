@@ -49,8 +49,8 @@ public class TweetProcessor implements Runnable{
 		
 		//set up two staging areas for twitter data to be written to.
 		//the other staging area will be where Hadoop gets input from
-		stagingArea1Path = prop.getProperty(Constants.TWITTER_STAGING1_LOC) + prop.getProperty(Constants.BASE_TWITTER_FILENAME);
-		stagingArea2Path = prop.getProperty(Constants.TWITTER_STAGING2_LOC) + prop.getProperty(Constants.BASE_TWITTER_FILENAME);
+		stagingArea1Path = Constants.ExecutingLocation + prop.getProperty(Constants.TWITTER_STAGING1_LOC) + prop.getProperty(Constants.BASE_TWITTER_FILENAME);
+		stagingArea2Path = Constants.ExecutingLocation +prop.getProperty(Constants.TWITTER_STAGING2_LOC) + prop.getProperty(Constants.BASE_TWITTER_FILENAME);
 		Tweets = new Status[numOfTweets];
 		stagingArea1 = new File(stagingArea1Path + processorNbr);
 		stagingArea2 = new File(stagingArea2Path + processorNbr);

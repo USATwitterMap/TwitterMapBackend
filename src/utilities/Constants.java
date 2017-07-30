@@ -22,4 +22,5 @@ public class Constants
 	public static final String NUM_OF_TWEETS_PER_PROCESSOR = "NUM_OF_TWEETS_PER_PROCESSOR";
 	public static final String TIME_BETWEEN_JOBS_IN_SECONDS = "TIME_BETWEEN_JOBS_IN_SECONDS";
 	public static final String STORAGE_IN_SECONDS = "STORAGE_IN_SECONDS";
+	public static String ExecutingLocation = "";
 }

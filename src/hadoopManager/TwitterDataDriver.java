@@ -7,11 +7,15 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.fs.FileSystem;
 import java.util.Properties;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Logger;
+
+import com.sun.tools.javac.code.Attribute.Constant;
+
 import utilities.Constants;
 
 /**
@@ -32,7 +36,7 @@ public class TwitterDataDriver extends Configured implements Tool, Runnable {
 	 */
 	public TwitterDataDriver(Properties prop) 
 	{
-		hadoopOutputLoc = prop.getProperty(Constants.HADOOP_OUTPUT_DATA_LOC);
+		hadoopOutputLoc = Constants.ExecutingLocation + prop.getProperty(Constants.HADOOP_OUTPUT_DATA_LOC);
 		hadoopJobName = prop.getProperty(Constants.HADOOP_JOB_NAME);
 		logger.info("Hadoop job name: " + hadoopJobName);
 		logger.info("Hadoop output location: " + hadoopOutputLoc);
@@ -47,6 +51,17 @@ public class TwitterDataDriver extends Configured implements Tool, Runnable {
 		logger.info("Configuring Hadoop settings");
 		Configuration conf = new Configuration();
 		conf.set("mapreduce.output.textoutputformat.separator", ",");
+		conf.set("mapreduce.framework.name", "yarn");
+		conf.set("fs.defaultFS", "hdfs://localhost:8020");
+		conf.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
+		conf.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
+		conf.set("mapreduce.output.textoutputformat.separator", ",");
+		
+		FileSystem fs = FileSystem.get(conf);
+		Path in = new Path("TwitterInput");
+		fs.delete(in, true);
+		fs.copyFromLocalFile(new Path(inputFiles), in);
+		
 		Job job = new Job(conf);
 
 		job.setJarByClass(TwitterDataDriver.class);
@@ -54,14 +69,13 @@ public class TwitterDataDriver extends Configured implements Tool, Runnable {
 		job.setJobName(hadoopJobName);
 
 		//import all files under inputFiles directory using regex
-		FileInputFormat.addInputPath(job, new Path(inputFiles + "*"));
+		FileInputFormat.addInputPath(job, new Path(in + "/*"));
 
 		// this deletes possible output paths to prevent job failures
-		FileSystem fs = FileSystem.get(conf);
-		Path out = new Path(hadoopOutputLoc);
+		Path out = new Path("TwitterOutput");
 		fs.delete(out, true);
 		
-		FileOutputFormat.setOutputPath(job, new Path(hadoopOutputLoc));
+		FileOutputFormat.setOutputPath(job, out);
 
 		job.setMapperClass(TwitterDataMapper.class);
 
@@ -72,7 +86,18 @@ public class TwitterDataDriver extends Configured implements Tool, Runnable {
 		job.setOutputValueClass(IntWritable.class);
 		
 		logger.info("Executing Hadoop job on files: " + inputFiles + "*");
-		return job.waitForCompletion(true) ? 0 : 1;
+		logger.info("Hadoop input: " + in + "/*");
+		logger.info("Hadoop output: " + out + "/part-r-00000");
+		logger.info("Hadoop copy output to: " + new Path(hadoopOutputLoc + "/part-r-00000"));
+		
+		boolean returnCode = job.waitForCompletion(true);
+		
+		if(returnCode) 
+		{
+			logger.info("Hadoop job complete, copying data to local system");
+			fs.copyToLocalFile(true, new Path("TwitterOutput/part-r-00000"), new Path(hadoopOutputLoc + "/part-r-00000"));
+		}
+		return returnCode ? 0 : 1;
 
 	}
 	
@@ -81,6 +106,8 @@ public class TwitterDataDriver extends Configured implements Tool, Runnable {
 	 */
 	public void run()
 	{
+		
+		
 		String[] args = new String[] { };
 		try 
 		{
@@ -98,6 +125,6 @@ public class TwitterDataDriver extends Configured implements Tool, Runnable {
 	 */
 	public void SetNewInputLocation(String inputFiles) 
 	{
-		this.inputFiles = inputFiles;
+		this.inputFiles = inputFiles.substring(0, inputFiles.lastIndexOf(("/")));
 	}
 }
