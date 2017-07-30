@@ -17,6 +17,7 @@ import utilities.Constants;
 public class TweetProcessor implements Runnable{
 	
 	private boolean stop = false;
+	private boolean paused = false;
 	private boolean pause = false;
 	private int readPointer = 0;
 	private int writePointer = 0;
@@ -122,6 +123,7 @@ public class TweetProcessor implements Runnable{
 				while(pause) 
 				{
 					try {
+						paused = true;
 						Thread.sleep(10);
 					} catch (InterruptedException e) {
 						logger.info("Processor " + processorNbr + " interrupted while paused");
@@ -130,6 +132,7 @@ public class TweetProcessor implements Runnable{
 						break;
 					}
 				}
+				paused = false;
 			}
 			//wait for 10 milliseconds to prevent busy wait
 			try {
@@ -200,7 +203,7 @@ public class TweetProcessor implements Runnable{
 	public void Stop() 
 	{
 		stop = true;
-		while(IsBusy()) {
+		while(!paused) {
 			try {
 				Thread.sleep(10);
 			} catch (InterruptedException e) {
@@ -216,7 +219,7 @@ public class TweetProcessor implements Runnable{
 	public void Pause() 
 	{
 		pause = true;
-		while(IsBusy()) {
+		while(!paused) {
 			try {
 				Thread.sleep(10);
 			} catch (InterruptedException e) {
@@ -231,6 +234,13 @@ public class TweetProcessor implements Runnable{
 	public void Unpause() 
 	{
 		pause = false;
+		while(paused) {
+			try {
+				Thread.sleep(10);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	/***

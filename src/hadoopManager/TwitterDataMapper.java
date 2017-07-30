@@ -1,9 +1,19 @@
 package hadoopManager;
 import java.io.IOException;
+import java.io.StringReader;
+
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.CharArraySet;
+import org.apache.lucene.analysis.StopFilter;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.en.EnglishAnalyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.util.Version;
 
 
 /**
@@ -30,20 +40,26 @@ public class TwitterDataMapper extends Mapper<LongWritable, Text, Text, IntWrita
 	@Override
 	public void map(LongWritable key, Text value, Context context)
 
-	throws IOException, InterruptedException {
-
-		String word = "";
-		String line = value.toString();
+	throws IOException, InterruptedException 
+	{
+		 //get the state (always the first Token)
+	    String state = value.toString().substring(0, 2);
+	    String tweetContents = value.toString().substring(3);
 		
-		//state is first entry in each line, grab first
-		line = line.trim();
-		String[] tokens = line.split("\\ ");
-		String state = tokens[0];
-		
-		for(int index = 1; index < tokens.length; index++)
-		{
-			context.write(new Text(state + tokens[index]), new IntWritable(1));
-		}
+		//set up Lucene Tokenizer to filter out stop words and tokenize;
+		Analyzer analyzer = new StandardAnalyzer();
+	    StringReader tReader = new StringReader(tweetContents);
+		TokenStream tokenStream = analyzer.tokenStream("contents",tReader);
+		CharTermAttribute charTermAttribute = tokenStream.addAttribute(CharTermAttribute.class);
+		tokenStream.reset();
+	    
+	    //add each token to Hadoop
+	    while (tokenStream.incrementToken()) {
+	    	context.write(new Text(state + charTermAttribute.toString()), new IntWritable(1));
+	    }
+	    
+	    tokenStream.close();
+	    analyzer.close();
 	}
 
 }

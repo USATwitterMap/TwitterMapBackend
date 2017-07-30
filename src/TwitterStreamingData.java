@@ -81,6 +81,8 @@ public class TwitterStreamingData  {
 		        logger.info("Database insertion complete");
 			}
         }
+        //listener.StopListening();
+		//waitForThreadToDie(twitterData);
 	}
 	
 	/**
