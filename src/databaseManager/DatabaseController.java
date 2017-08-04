@@ -27,18 +27,13 @@ public class DatabaseController
     private final static Logger logger = Logger.getLogger(DatabaseController.class);
     private Statement stmt = null;
     private Timestamp lastInsert = null;
+    
+    private String databaseUrl = "";
+    private String databaseUser = "";
+    private String databasePass = "";
 	
-    /**
-     * Creates connection to Database using property settings
-     * @param prop Property data loaded from filesystem
-     */
-	public DatabaseController(Properties prop) 
-	{
-		String databaseUrl = prop.getProperty(Constants.DB_URL);
-		String databaseUser = prop.getProperty(Constants.USER);
-		String databasePass = prop.getProperty(Constants.PASS);
-		storageInSec = prop.getProperty(Constants.STORAGE_IN_SECONDS);
-		timeBetweenJobs = prop.getProperty(Constants.TIME_BETWEEN_JOBS_IN_SECONDS);
+    public void DBConnect() 
+    {
 		logger.info("Database URL: " + databaseUrl);
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
@@ -49,6 +44,31 @@ public class DatabaseController
 			e.printStackTrace();
 		}
 		logger.info("Database connection successful");
+    }
+    
+    public void DBDisconnect() 
+    {
+		logger.error("Closing database connection");
+		try {
+			conn.close();
+		} catch (Exception e) {
+			logger.error("Close database connection failed");
+			e.printStackTrace();
+		}
+		logger.info("Database connection closed successfully");
+    }
+    
+    /**
+     * Creates connection to Database using property settings
+     * @param prop Property data loaded from filesystem
+     */
+	public DatabaseController(Properties prop) 
+	{
+		databaseUrl = prop.getProperty(Constants.DB_URL);
+		databaseUser = prop.getProperty(Constants.USER);
+		databasePass = prop.getProperty(Constants.PASS);
+		storageInSec = prop.getProperty(Constants.STORAGE_IN_SECONDS);
+		timeBetweenJobs = prop.getProperty(Constants.TIME_BETWEEN_JOBS_IN_SECONDS);
 	}
 	
 	/**
@@ -57,6 +77,7 @@ public class DatabaseController
 	 */
 	public void InsertTwitterData(String ParsedTwitterData) 
 	{
+		DBConnect();
 		logger.info("Inserting parsed twitter data into database");
 		try {
 			//create a new entry in the Time table to categorize these tweets
@@ -72,6 +93,7 @@ public class DatabaseController
 			logger.error("Inserting parsed twitter data into database failed");
 			e.printStackTrace();
 		}
+		DBDisconnect();
 	}
 	
 	/**
@@ -80,6 +102,7 @@ public class DatabaseController
 	 */
 	private void DeleteOldTimes() throws SQLException 
 	{
+		DBConnect();
 		String cutoffTime = new java.sql.Timestamp(new java.util.Date().getTime()).toString();
 		logger.info("Checking if database contains twitter data older than: " + storageInSec + " seconds");
 		String sql = "DELETE FROM Words where time IN (SELECT id FROM Times WHERE TIMESTAMPDIFF(SECOND, endTime, '"+cutoffTime+"') > " + storageInSec + ")";
@@ -95,6 +118,7 @@ public class DatabaseController
     	else {
     		logger.info("No expired twitter data found");
     	}
+		DBDisconnect();
 	}
 	
 	/**
@@ -105,6 +129,7 @@ public class DatabaseController
 	 */
 	private void LoadHadoopFiles(String newTime, String path) throws SQLException
 	{
+		DBConnect();
 		logger.info("Loading Hadoop output data from : " + path);
 		
 		//Hadoop outputs files in comma seperated format
@@ -118,6 +143,7 @@ public class DatabaseController
 	    logger.info("InsertQuery: " + sql);
 	    stmt.executeQuery(sql);
 	    logger.info("Hadoop data insertion complete");
+	    DBDisconnect();
 	}
 	
 	/**
@@ -127,6 +153,7 @@ public class DatabaseController
 	 */
 	private String GetLastTime() throws SQLException 
 	{
+		DBConnect();
 		String sql = "SELECT id FROM Times where endTime = (SELECT MAX(endTime) FROM Times)";
 	    ResultSet rs = stmt.executeQuery(sql);
 	    int timeId = 0;
@@ -135,6 +162,7 @@ public class DatabaseController
 	    while (rs.next()) {
 	    	timeId = rs.getInt("id");
 	    }
+	    DBDisconnect();
 	    return Integer.toString(timeId);
 	}
 	
@@ -145,6 +173,7 @@ public class DatabaseController
 	 */
 	private String CreateNewTime() throws SQLException 
 	{
+		DBConnect();
 		Calendar c = Calendar.getInstance();
 		Timestamp currentTime = new java.sql.Timestamp(new java.util.Date().getTime());
 		Timestamp date = null;
@@ -172,6 +201,7 @@ public class DatabaseController
 		pstmt.setTimestamp(3, currentTime);
 		pstmt.executeUpdate();
 		pstmt.close();
+		DBDisconnect();
 		
 		//return the Id of this created tuple
 		return GetLastTime();
