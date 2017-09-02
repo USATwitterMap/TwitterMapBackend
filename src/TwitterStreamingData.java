@@ -103,17 +103,6 @@ public class TwitterStreamingData  {
 	    } catch (IOException e1) {
 	    	throw new FileNotFoundException("property file '" + propFileName + "' not found in the classpath");
 	    }
-		
-		
-		/*
-		InputStream inputStream = TwitterStreamingData.class.getClassLoader().getResourceAsStream(propFileName);
-		 
-		if (inputStream != null) {
-			prop.load(inputStream);
-		} else {
-			throw new FileNotFoundException("property file '" + propFileName + "' not found in the classpath");
-		}
-		*/
 	}
 	
 	/**

@@ -67,8 +67,13 @@ public class TwitterDataMapper extends Mapper<LongWritable, Text, Text, IntWrita
 	    	encoder.encode(CharBuffer.wrap(rawData));
 	    	
 	    	// removing non UTF-8 symbols (for SQL insertion later)
-	    	CharBuffer cleanData = utf8Decoder.decode(encoder.encode(CharBuffer.wrap(rawData)));	    	
-	    	context.write(new Text(state + cleanData.toString()), new IntWritable(1));
+	    	CharBuffer cleanData = utf8Decoder.decode(encoder.encode(CharBuffer.wrap(rawData)));	
+	    	
+	    	String str = cleanData.toString();
+	    	// removing surrogate characters (not compatible with mySQL 5.*)
+	    	str = str.replaceAll( "([\\ud800-\\udbff\\udc00-\\udfff])", "?");
+	    	
+	    	context.write(new Text(state + str), new IntWritable(1));
 	    }
 	    
 	    tokenStream.close();
