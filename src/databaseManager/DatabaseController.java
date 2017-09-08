@@ -105,14 +105,22 @@ public class DatabaseController
 		DBConnect();
 		String cutoffTime = new java.sql.Timestamp(new java.util.Date().getTime()).toString();
 		logger.info("Checking if database contains twitter data older than: " + storageInSec + " seconds");
-		String sql = "DELETE FROM Words where time IN (SELECT id FROM Times WHERE TIMESTAMPDIFF(SECOND, endTime, '"+cutoffTime+"') > " + storageInSec + ")";
-    	
+		String sql = "SELECT id FROM Times WHERE TIMESTAMPDIFF(SECOND, endTime, '"+cutoffTime+"') > " + storageInSec + ")";
+		ResultSet rs = stmt.executeQuery(sql);
 		//Need to delete tuples from Words first due to foreign key constraints
-		if(stmt.executeUpdate(sql) > 0) 
+		if(rs.getFetchSize() > 0) 
     	{
-			//TODO: what if timeslice has no words? Time entry is never deleted... 
     		logger.info("Deleting expired twitter data");
-	    	sql = "DELETE FROM Times WHERE TIMESTAMPDIFF(SECOND, endTime, '"+cutoffTime+"') > " + storageInSec;
+    		rs.next();
+    		String timesToDelete = Integer.toString(rs.getInt("id"));
+    	    while (rs.next()) 
+    	    {
+    	    	timesToDelete += ", ";
+    	    	timesToDelete += rs.getInt("id");
+    	    }
+    		sql = "DELETE FROM Words where time IN (" + timesToDelete + ")";
+    		stmt.executeUpdate(sql);
+	    	sql = "DELETE FROM Times WHERE id IN (" + timesToDelete + ")";
 	    	stmt.executeUpdate(sql);	
     	}
     	else {
