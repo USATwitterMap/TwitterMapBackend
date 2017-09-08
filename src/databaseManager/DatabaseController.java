@@ -105,13 +105,12 @@ public class DatabaseController
 		DBConnect();
 		String cutoffTime = new java.sql.Timestamp(new java.util.Date().getTime()).toString();
 		logger.info("Checking if database contains twitter data older than: " + storageInSec + " seconds");
-		String sql = "SELECT id FROM Times WHERE TIMESTAMPDIFF(SECOND, endTime, '"+cutoffTime+"') > " + storageInSec + ")";
+		String sql = "SELECT id FROM Times WHERE TIMESTAMPDIFF(SECOND, endTime, '"+cutoffTime+"') > " + storageInSec;
 		ResultSet rs = stmt.executeQuery(sql);
 		//Need to delete tuples from Words first due to foreign key constraints
-		if(rs.getFetchSize() > 0) 
+		if(rs.next()) 
     	{
     		logger.info("Deleting expired twitter data");
-    		rs.next();
     		String timesToDelete = Integer.toString(rs.getInt("id"));
     	    while (rs.next()) 
     	    {
