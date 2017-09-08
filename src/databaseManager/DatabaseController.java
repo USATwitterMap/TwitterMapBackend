@@ -48,7 +48,7 @@ public class DatabaseController
     
     public void DBDisconnect() 
     {
-		logger.error("Closing database connection");
+		logger.info("Closing database connection");
 		try {
 			conn.close();
 		} catch (Exception e) {
