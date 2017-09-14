@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Properties;
 
@@ -212,6 +213,58 @@ public class DatabaseController
 		
 		//return the Id of this created tuple
 		return GetLastTime();
+	}
+	
+	public void InsertPopularTerms() 
+	{
+		DBConnect();
+		
+		try 
+		{
+			logger.info("Checking popular terms have been calculated within the past week");
+			String sql = "SELECT count(*) as total FROM PopularTerms p join Times t on p.startTime = t.id where t.endTime > DATE_ADD(CURRENT_TIMESTAMP, INTERVAL -7 DAY)";
+			ResultSet rs = stmt.executeQuery(sql);
+			//Need to delete tuples from Words first due to foreign key constraints
+			if(rs.next()) 
+	    	{
+				int records = rs.getInt("total");
+				if(records == 0) 
+				{
+		    		logger.info("No records inserted for 1 week, creating popular terms list");
+		    		sql = "select id, startTime from (select id, startTime from Times t1 where CURRENT_TIMESTAMP > startTime order by startTime desc limit 1) as a UNION ALL select id, endTime from (select id, endTime from Times t1 where DATE_ADD(CURRENT_TIMESTAMP, INTERVAL -7 DAY) < startTime order by startTime asc limit 1) as b;";
+		    		rs = stmt.executeQuery(sql);
+		    		rs.next();
+		    		int startTime = rs.getInt("id");
+		    		int endTime = rs.getInt("id");
+		    		sql = "select w.word, sum(occurances) as sumOccurances from Words as w join Times as t on w.time=t.id where t.startTime > DATE_ADD(CURRENT_TIMESTAMP, INTERVAL -7 DAY) and t.startTime < CURRENT_TIMESTAMP and w.word not in (select word2 from (select w2.word as word2, sum(occurances) as sumOccurances2 from Words as w2 join Times as t2 on w2.time=t2.id where t2.startTime > DATE_ADD(CURRENT_TIMESTAMP, INTERVAL -21 DAY) and t2.startTime < DATE_ADD(CURRENT_TIMESTAMP, INTERVAL -14 DAY) group by w2.word order by sumOccurances2 desc) as tempTable) group by w.word order by sumOccurances desc limit 10;";
+					rs = stmt.executeQuery(sql);
+					ArrayList<Object[]> words = new ArrayList<Object[]>();
+					while(rs.next()) 
+					{
+						words.add(new Object[] { rs.getString("word"), rs.getInt("sumOccurances") });
+						sql = "INSERT INTO PopularTerms (id, word, occurances, startTime, endTime) VALUES (?, ?, ?, ?, ?)";
+						PreparedStatement pstmt = conn.prepareStatement(sql);
+						pstmt.setNull(1, java.sql.Types.INTEGER);
+						pstmt.setString(2, rs.getString("word"));
+						pstmt.setInt(3, rs.getInt("sumOccurances"));
+						pstmt.setInt(4, startTime);
+						pstmt.setInt(5, endTime);
+					}
+				}
+				else 
+				{
+		    		logger.info("Last records inserted within current week, skipping");
+		    	}
+	    	}
+    	
+		} 
+		catch (SQLException e) 
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		DBDisconnect();
+
 	}
 	
 }

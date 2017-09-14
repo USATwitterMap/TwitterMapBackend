@@ -79,6 +79,10 @@ public class TwitterStreamingData  {
 		        //insert hadoop job output into database
 		        dbController.InsertTwitterData(Constants.ExecutingLocation + hadoopOutput + "part-r-00000");
 		        logger.info("Database insertion complete");
+		        
+		        //calculate popular terms every week
+		        dbController.InsertPopularTerms();
+		        logger.info("Popular terms check complete");
 			}
         }
         //listener.StopListening();
