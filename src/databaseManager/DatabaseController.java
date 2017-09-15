@@ -226,7 +226,7 @@ public class DatabaseController
 		try 
 		{
 			logger.info("Checking popular terms have been calculated within the past week");
-			String sql = "SELECT count(*) as total FROM PopularTerms p join Times t on p.startTime = t.id where t.endTime > DATE_ADD(CURRENT_TIMESTAMP, INTERVAL -7 DAY);";
+			String sql = "SELECT count(*) as total FROM PopularTerms p join Times t on p.endTime = t.id where t.endTime > DATE_ADD(CURRENT_TIMESTAMP, INTERVAL -7 DAY);";
 			ResultSet rs = stmt.executeQuery(sql);
 			//Need to delete tuples from Words first due to foreign key constraints
 			if(rs.next()) 
