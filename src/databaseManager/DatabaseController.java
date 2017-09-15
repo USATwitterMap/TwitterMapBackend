@@ -232,6 +232,7 @@ public class DatabaseController
 			if(rs.next()) 
 	    	{
 				int records = rs.getInt("total");
+				logger.info("Records created in last week: " + records);
 				if(records == 0) 
 				{
 		    		logger.info("No records inserted for 1 week, creating popular terms list");
