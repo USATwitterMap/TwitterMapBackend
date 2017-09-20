@@ -72,8 +72,12 @@ public class TwitterDataMapper extends Mapper<LongWritable, Text, Text, IntWrita
 	    	String str = cleanData.toString();
 	    	// removing surrogate characters (not compatible with mySQL 5.*)
 	    	str = str.replaceAll( "([\\ud800-\\udbff\\udc00-\\udfff])", "?");
-	    	
-	    	context.write(new Text(state + str), new IntWritable(1));
+	    	// remove any spaces to reduce SQL bugs (shouldnt be any after tokenizer)
+	    	str = str.replaceAll(" ", "");
+	    	if(str.length() > 0) 
+	    	{
+	    		context.write(new Text(state + str), new IntWritable(1));
+	    	}
 	    }
 	    
 	    tokenStream.close();

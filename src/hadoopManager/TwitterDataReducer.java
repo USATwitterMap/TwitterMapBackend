@@ -38,7 +38,7 @@ extends Reducer<Text, IntWritable, Text, IntWritable> {
 		//filter out if occurrences are not high enough (misspellings, etc..)
 		if(sum > 2) 
 		{
-			Text realKey = new Text(key.toString().substring(0, 2) + "," + key.toString().substring(2));
+			Text realKey = new Text(key.toString().substring(0, 2) + " " + key.toString().substring(2));
 			context.write(realKey, new IntWritable(sum));
 		}
 	}

@@ -143,7 +143,7 @@ public class DatabaseController
 		//Hadoop outputs files in comma seperated format
 	    String sql = "LOAD DATA LOCAL INFILE "
 	    		+ "'" + path + "' "
-	    		+ "INTO TABLE Words FIELDS TERMINATED BY ',' "
+	    		+ "INTO TABLE Words FIELDS TERMINATED BY ' ' "
 	    		+ "(@col1,@col2,@col3) set id=NULL,state=@col1,word=@col2,occurances=@col3,time=@TIME;";
 	    		
 	    //Add newly created timestamp to Word tuple because its not present in hadoop output

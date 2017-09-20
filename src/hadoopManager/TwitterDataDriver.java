@@ -50,12 +50,11 @@ public class TwitterDataDriver extends Configured implements Tool, Runnable {
 		// create a configuration
 		logger.info("Configuring Hadoop settings");
 		Configuration conf = new Configuration();
-		conf.set("mapreduce.output.textoutputformat.separator", ",");
 		conf.set("mapreduce.framework.name", "yarn");
 		conf.set("fs.defaultFS", "hdfs://localhost:8020");
 		conf.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
 		conf.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
-		conf.set("mapreduce.output.textoutputformat.separator", ",");
+		conf.set("mapreduce.output.textoutputformat.separator", " ");
 		
 		FileSystem fs = FileSystem.get(conf);
 		Path in = new Path("TwitterInput");
