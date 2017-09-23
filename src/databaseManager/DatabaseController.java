@@ -118,7 +118,7 @@ public class DatabaseController
     	    	timesToDelete += ", ";
     	    	timesToDelete += rs.getInt("id");
     	    }
-    		sql = "DELETE FROM Words where time IN (" + timesToDelete + ")";
+    		sql = "DELETE FROM WordsClustered where time IN (" + timesToDelete + ")";
     		stmt.executeUpdate(sql);
 	    	sql = "DELETE FROM Times WHERE id IN (" + timesToDelete + ")";
 	    	stmt.executeUpdate(sql);	
@@ -143,8 +143,8 @@ public class DatabaseController
 		//Hadoop outputs files in comma seperated format
 	    String sql = "LOAD DATA LOCAL INFILE "
 	    		+ "'" + path + "' "
-	    		+ "INTO TABLE Words FIELDS TERMINATED BY ' ' "
-	    		+ "(@col1,@col2,@col3) set id=NULL,state=@col1,word=@col2,occurances=@col3,time=@TIME;";
+	    		+ "INTO TABLE WordsClustered FIELDS TERMINATED BY ' ' "
+	    		+ "(@col1,@col2,@col3) set state=@col1,word=@col2,occurances=@col3,time=@TIME;";
 	    		
 	    //Add newly created timestamp to Word tuple because its not present in hadoop output
 	    sql = sql.replace("@TIME", newTime);
@@ -244,7 +244,7 @@ public class DatabaseController
 			    		if(rs.next()) 
 			    		{
 				    		int startTime = rs.getInt("id");
-				    		sql = "select w.word, sum(occurances) as sumOccurances from Words as w join Times as t on w.time=t.id where t.startTime > DATE_ADD(CURRENT_TIMESTAMP, INTERVAL -7 DAY) and t.startTime < CURRENT_TIMESTAMP and w.word not in (select word2 from (select w2.word as word2, sum(occurances) as sumOccurances2 from Words as w2 join Times as t2 on w2.time=t2.id where t2.startTime > DATE_ADD(CURRENT_TIMESTAMP, INTERVAL -21 DAY) and t2.startTime < DATE_ADD(CURRENT_TIMESTAMP, INTERVAL -14 DAY) group by w2.word order by sumOccurances2 desc) as tempTable) group by w.word order by sumOccurances desc limit 10;";
+				    		sql = "select w.word, sum(occurances) as sumOccurances from WordsClustered as w join Times as t on w.time=t.id where t.startTime > DATE_ADD(CURRENT_TIMESTAMP, INTERVAL -7 DAY) and t.startTime < CURRENT_TIMESTAMP and w.word not in (select word2 from (select w2.word as word2, sum(occurances) as sumOccurances2 from WordsClustered as w2 join Times as t2 on w2.time=t2.id where t2.startTime > DATE_ADD(CURRENT_TIMESTAMP, INTERVAL -21 DAY) and t2.startTime < DATE_ADD(CURRENT_TIMESTAMP, INTERVAL -14 DAY) group by w2.word order by sumOccurances2 desc) as tempTable) group by w.word order by sumOccurances desc limit 10;";
 							rs = stmt.executeQuery(sql);
 							while(rs.next()) 
 							{
